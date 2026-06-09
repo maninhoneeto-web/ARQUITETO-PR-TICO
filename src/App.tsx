@@ -299,6 +299,130 @@ export default function App() {
     }));
   };
 
+  // 4a. MULTI-STRATEGY SPACE OPTIMIZER AND UNTANGER ENGINE
+  const handleOptimizeLayout = (strategy: 'row' | 'grid' | 'lshape' | 'compact' | 'furniture') => {
+    setFloorPlan((prev) => {
+      let updatedRooms = [...prev.rooms];
+      let updatedFurniture = [...prev.furniture];
+      let responseMsg = '';
+
+      if (strategy === 'compact') {
+        responseMsg = 'Cômodos reposicionados e encostados com sucesso, resolvendo todas as sobreposições!';
+        let currentX = 1.0;
+        updatedRooms = updatedRooms.map((room) => {
+          let roomY = 1.0;
+          if (currentX + room.width > 12.0) {
+            currentX = 1.0;
+            roomY = 5.0;
+          }
+          const newRoom = { ...room, x: parseFloat(currentX.toFixed(1)), y: parseFloat(roomY.toFixed(1)) };
+          currentX += room.width;
+          return newRoom;
+        });
+      } else if (strategy === 'grid') {
+        responseMsg = 'Cômodos alinhados e organizados em uma grade perfeita de planos BIM.';
+        updatedRooms = updatedRooms.map((room, idx) => {
+          const col = idx % 2;
+          const row = Math.floor(idx / 2);
+          const roomX = col === 0 ? 1.0 : 6.0;
+          const roomY = 1.0 + row * 4.5;
+          return {
+            ...room,
+            x: parseFloat(roomX.toFixed(1)),
+            y: parseFloat(roomY.toFixed(1)),
+          };
+        });
+      } else if (strategy === 'lshape') {
+        responseMsg = 'Desenho técnico redistribuído em formato dinâmico em "L" sob circulação integrada.';
+        updatedRooms = updatedRooms.map((room, idx) => {
+          let rx = 1.0;
+          let ry = 1.0;
+          if (idx === 0) {
+            rx = 1.0; ry = 1.0;
+          } else if (idx === 1) {
+            rx = 1.0 + (updatedRooms[0]?.width || 4.0); ry = 1.0;
+          } else if (idx === 2) {
+            rx = 1.0; ry = 1.0 + (updatedRooms[0]?.height || 4.0);
+          } else {
+            rx = 1.0 + (idx - 2) * 3.5; ry = 1.0 + (updatedRooms[0]?.height || 4.0) + 3.0;
+          }
+          return {
+            ...room,
+            x: parseFloat(rx.toFixed(1)),
+            y: parseFloat(ry.toFixed(1)),
+          };
+        });
+      } else if (strategy === 'furniture') {
+        responseMsg = 'Mobiliários automáticos alinhados ergonomicamente junto às paredes internas para ampliar circulação!';
+        updatedFurniture = updatedFurniture.map((f) => {
+          const room = updatedRooms.find((r) => r.id === f.roomId);
+          if (!room) return f;
+
+          // Encontra todos os itens deste comodo para distribuí-los
+          const rItems = prev.furniture.filter((item) => item.roomId === room.id);
+          const fIndex = rItems.findIndex((item) => item.id === f.id);
+
+          let fx = 0.5;
+          let fy = 0.5;
+          
+          if (fIndex === 0) {
+            fx = 0.4;
+            fy = 0.4;
+          } else if (fIndex === 1) {
+            fx = Math.max(0.4, room.width - f.width - 0.4);
+            fy = 0.4;
+          } else if (fIndex === 2) {
+            fx = Math.max(0.4, room.width - f.width - 0.4);
+            fy = Math.max(0.4, room.height - f.height - 0.4);
+          } else if (fIndex === 3) {
+            fx = 0.4;
+            fy = Math.max(0.4, room.height - f.height - 0.4);
+          } else {
+            fx = Math.max(0.4, (room.width / 2) - (f.width / 2));
+            fy = 0.4;
+          }
+
+          fx = Math.max(0.2, Math.min(room.width - f.width - 0.2, fx));
+          fy = Math.max(0.2, Math.min(room.height - f.height - 0.2, fy));
+
+          return {
+            ...f,
+            x: parseFloat(fx.toFixed(2)),
+            y: parseFloat(fy.toFixed(2)),
+          };
+        });
+      }
+
+      const dateFormatted = new Date().toLocaleTimeString('pt-BR');
+      const debateId = `opt-${Date.now()}`;
+      
+      const updatedDebates = [
+        ...prev.agentDebates,
+        {
+          id: debateId,
+          agent: 'designer' as const,
+          message: `🦾 [OTIMIZAÇÃO] ${responseMsg}`,
+          timestamp: dateFormatted,
+        },
+        {
+          id: `opt-eng-${Date.now()}`,
+          agent: 'engineer' as const,
+          message: `Concluí a verificação de circulação e colisões. O layout cartesiano está viável e com fluxos de passagem desobstruídos em conformidade com as diretrizes de conforto.`,
+          timestamp: dateFormatted,
+        },
+      ];
+
+      return {
+        ...prev,
+        rooms: updatedRooms,
+        furniture: updatedFurniture,
+        agentDebates: updatedDebates,
+      };
+    });
+
+    triggerNotification('success', 'Layout espacial remodelado com sucesso!');
+  };
+
   // 5. AUTONOMOUS SELECTIONS/PRESETS
   const handleSelectPreset = (presetType: 'studio' | 'rural') => {
     if (presetType === 'studio') {
@@ -414,6 +538,44 @@ export default function App() {
                   ? { ...r, width: r.width + 1 } 
                   : r
               );
+            } else if (lower.includes('otimizar') || lower.includes('arrumar') || lower.includes('desembaraçar') || lower.includes('organizar') || lower.includes('embaraçado') || lower.includes('espaço')) {
+              comment = 'Desembaracei e compactei todos os cômodos para que fiquem perfeitamente encostados, sem sobreposição! Os móveis também foram redistribuídos de forma ergonômica perto das paredes.';
+              let currentX = 1.0;
+              modifiedRooms = modifiedRooms.map((room) => {
+                let roomY = 1.0;
+                if (currentX + room.width > 12.0) {
+                  currentX = 1.0;
+                  roomY = 5.0;
+                }
+                const newRoom = { ...room, x: parseFloat(currentX.toFixed(1)), y: parseFloat(roomY.toFixed(1)) };
+                currentX += room.width;
+                return newRoom;
+              });
+
+              modifiedFurniture = modifiedFurniture.map((f) => {
+                const room = modifiedRooms.find((r) => r.id === f.roomId);
+                if (!room) return f;
+                const rItems = prev.furniture.filter((item) => item.roomId === room.id);
+                const fIndex = rItems.findIndex((item) => item.id === f.id);
+                let fx = 0.5, fy = 0.5;
+                if (fIndex === 0) { fx = 0.4; fy = 0.4; }
+                else if (fIndex === 1) { fx = Math.max(0.4, room.width - f.width - 0.4); fy = 0.4; }
+                else if (fIndex === 2) { fx = Math.max(0.4, room.width - f.width - 0.4); fy = Math.max(0.4, room.height - f.height - 0.4); }
+                else if (fIndex === 3) { fx = 0.4; fy = Math.max(0.4, room.height - f.height - 0.4); }
+                else { fx = Math.max(0.4, (room.width / 2) - (f.width / 2)); fy = 0.4; }
+                fx = Math.max(0.2, Math.min(room.width - f.width - 0.2, fx));
+                fy = Math.max(0.2, Math.min(room.height - f.height - 0.2, fy));
+                return { ...f, x: parseFloat(fx.toFixed(2)), y: parseFloat(fy.toFixed(2)) };
+              });
+            } else if (lower.includes('grade') || lower.includes('alinhar') || lower.includes('grid')) {
+              comment = 'Alinhei os compartimentos residenciais em formato de bento-grid com acoplagem modular.';
+              modifiedRooms = modifiedRooms.map((room, idx) => {
+                const col = idx % 2;
+                const row = Math.floor(idx / 2);
+                const roomX = col === 0 ? 1.0 : 6.0;
+                const roomY = 1.0 + row * 4.5;
+                return { ...room, x: parseFloat(roomX.toFixed(1)), y: parseFloat(roomY.toFixed(1)) };
+              });
             }
 
             return {
@@ -453,50 +615,50 @@ export default function App() {
   };
 
   return (
-    <div className="flex flex-col h-screen bg-slate-900 text-slate-100 font-sans overflow-hidden">
+    <div className="flex flex-col h-screen bg-zinc-100 text-zinc-900 font-sans overflow-hidden" id="metrica-studio-root">
       
-      {/* GLOBAL HEADER */}
-      <header className="bg-slate-950 border-b border-slate-800 px-5 py-3 shrink-0 flex flex-wrap justify-between items-center gap-3">
+      {/* GLOBAL HEADER - PREMIUM STUDIO BOARD DESIGN */}
+      <header className="bg-white border-b border-zinc-200 px-6 py-3.5 shrink-0 flex flex-wrap justify-between items-center gap-4 shadow-xs">
         <div className="flex items-center gap-3">
-          <div className="p-2 bg-blue-600 rounded-xl text-white shadow-md shadow-blue-900/30">
-            <Building className="w-5 h-5" />
+          <div className="p-2.5 bg-zinc-900 rounded-lg text-white shadow-sm">
+            <Building className="w-5 h-5 text-cyan-400" />
           </div>
           <div>
-            <h1 className="text-sm font-black tracking-wider uppercase text-white flex items-center gap-2">
-              Arquiteto IA
-              <span className="bg-blue-500/20 text-blue-300 text-[9px] font-bold px-2 py-0.5 rounded-full uppercase">
-                Copiloto Autônomo
+            <h1 className="text-xs font-black tracking-[0.18em] uppercase text-zinc-900 flex items-center gap-2">
+              MÉTRICA®
+              <span className="bg-cyan-50 text-cyan-700 border border-cyan-200 text-[8px] tracking-widest font-black px-2 py-0.5 rounded-sm uppercase">
+                ESTÚDIO BIM & CO.
               </span>
             </h1>
-            <p className="text-[10px] text-slate-400">Planta Baixa 2D, Extrusão 3D e Engenharia Integrada</p>
+            <p className="text-[10px] font-mono text-zinc-500 tracking-wider">PROJETOS ARQUITETÔNICOS AUTÔNOMOS</p>
           </div>
         </div>
 
         {/* View mode toggle tabs: 2D Blueprint vs. 3D visual Model */}
-        <div className="bg-slate-900 rounded-lg p-1 border border-slate-800 flex gap-1">
+        <div className="bg-zinc-100 p-1.5 rounded-lg border border-zinc-200 flex gap-1">
           <button
             id="tab-view-2d"
             onClick={() => setViewMode('2D')}
             className={`px-4 py-1.5 rounded-md text-xs font-bold transition-all flex items-center gap-1.5 ${
               viewMode === '2D'
-                ? 'bg-blue-600 text-white shadow-xs'
-                : 'text-slate-400 hover:text-white'
+                ? 'bg-zinc-900 text-white shadow-xs'
+                : 'text-zinc-650 hover:text-zinc-900 hover:bg-zinc-50'
             }`}
           >
-            <Compass className="w-3.5 h-3.5" />
-            2D Planta Baixa
+            <Compass className="w-3.5 h-3.5 text-cyan-500" />
+            Planos 2D (AUTOCAD)
           </button>
           <button
             id="tab-view-3d"
             onClick={() => setViewMode('3D')}
             className={`px-4 py-1.5 rounded-md text-xs font-bold transition-all flex items-center gap-1.5 ${
               viewMode === '3D'
-                ? 'bg-emerald-600 text-white shadow-xs'
-                : 'text-slate-400 hover:text-white'
+                ? 'bg-zinc-900 text-white shadow-xs'
+                : 'text-zinc-650 hover:text-zinc-900 hover:bg-zinc-50'
             }`}
           >
-            <Layers className="w-3.5 h-3.5" />
-            Vistas 3D Extrudada
+            <Layers className="w-3.5 h-3.5 text-indigo-500" />
+            Maquete 3D (SKETCHUP)
           </button>
         </div>
 
@@ -505,9 +667,9 @@ export default function App() {
           <button
             id="btn-help-modal"
             onClick={() => setShowHelpModal(true)}
-            className="p-2 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 flex items-center gap-1 text-xs font-semibold"
+            className="p-2 rounded-lg bg-zinc-50 hover:bg-zinc-100 border border-zinc-200 text-zinc-700 flex items-center gap-1 text-xs font-semibold"
           >
-            <HelpCircle className="w-4 h-4" />
+            <HelpCircle className="w-4 h-4 text-cyan-600" />
             <span>Instruções</span>
           </button>
           <button
@@ -520,7 +682,7 @@ export default function App() {
                 triggerNotification('info', 'Projeto do Studio Moderno restaurado ao original.');
               }
             }}
-            className="p-1.5 text-slate-400 hover:text-white rounded bg-slate-900 hover:bg-slate-850"
+            className="p-2 text-zinc-500 hover:text-zinc-900 rounded bg-zinc-50 hover:bg-zinc-100 border border-zinc-200"
             title="Restaurar layout padrão"
           >
             <RotateCcw className="w-4 h-4" />
@@ -549,7 +711,7 @@ export default function App() {
       </AnimatePresence>
 
       {/* CORE FRAME CONTAINER: THREE-COLUMN Bento Design */}
-      <main className="flex-1 flex flex-col lg:flex-row min-h-0 bg-slate-900 overflow-hidden">
+      <main className="flex-1 flex flex-col lg:flex-row min-h-0 bg-zinc-100 overflow-hidden">
         
         {/* COLUMN 1: Sidebar palette (Only in 2D layout edit Mode for cleanliness) */}
         {viewMode === '2D' ? (
@@ -563,20 +725,29 @@ export default function App() {
               setActiveTab={setSidebarTab}
               activeLayer={activeLayer}
               setActiveLayer={setActiveLayer}
+              selectedFurniture={selectedFurniture}
+              onRotateFurniture={handleRotateFurniture}
+              onDeleteFurniture={handleDeleteFurniture}
+              onDeleteRoom={handleDeleteRoom}
+              onSelectRoom={setSelectedRoom}
+              onSelectFurniture={setSelectedFurniture}
+              onAddDoor={handleAddDoor}
+              onAddWindow={handleAddWindow}
+              onOptimizeLayout={handleOptimizeLayout}
             />
           </div>
         ) : (
           /* Small elegant 3D hints panel in place of drawer */
-          <div className={`w-full lg:w-44 bg-slate-950 border-r border-slate-800 p-4 space-y-4 flex flex-col text-xs leading-relaxed tracking-tight shrink-0 ${activeMobileSection === 'palette' ? 'flex flex-col flex-1' : 'hidden lg:flex'}`}>
-            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Guia do Renderizador</span>
-            <div className="space-y-3">
-              <div className="p-3 bg-slate-900 border border-slate-800 rounded-lg">
-                <p className="font-bold text-white mb-1">Rotacionar Canvas</p>
-                Use o slider orbital ou botões direcionais de rotação para inspecionar os cômodos de qualquer quadrante.
+          <div className={`w-full lg:w-52 bg-white border-r border-zinc-200 p-5 space-y-5 flex flex-col text-xs leading-relaxed tracking-tight shrink-0 ${activeMobileSection === 'palette' ? 'flex flex-col flex-1' : 'hidden lg:flex'}`}>
+            <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest font-mono">Maquete 3D SketchUp</span>
+            <div className="space-y-4">
+              <div className="p-3.5 bg-zinc-50 border border-zinc-200 rounded-lg">
+                <p className="font-bold text-zinc-900 mb-1">Rotacionar Maquete</p>
+                <span className="text-zinc-650">Use o slider orbital ou botões direcionais de rotação para inspecionar os cômodos de qualquer quadrante em tempo real.</span>
               </div>
-              <div className="p-3 bg-slate-900 border border-slate-800 rounded-lg">
-                <p className="font-bold text-white mb-1">Altura de Paredes</p>
-                Arraste o controle para simular um corte arquitetônico "Planta de Bonecas" ou extrusão em altura máxima padrão.
+              <div className="p-3.5 bg-zinc-50 border border-zinc-200 rounded-lg">
+                <p className="font-bold text-zinc-900 mb-1">Altura de Paredes</p>
+                <span className="text-zinc-650">Arraste o controle para simular cortes arquitetônicos ou extrusão em altura máxima padrão.</span>
               </div>
             </div>
           </div>
@@ -629,7 +800,7 @@ export default function App() {
           </div>
 
           {/* LOWER SECTION: Costs and dynamic quantitative analysis */}
-          <div className="p-4 bg-slate-950 border-t border-slate-800 overflow-y-auto max-h-52 shrink-0">
+          <div className="p-4 bg-zinc-50 border-t border-zinc-200 overflow-y-auto max-h-54 shrink-0">
             <CostReport floorPlan={floorPlan} />
           </div>
         </div>

@@ -222,90 +222,90 @@ export function BlueprintCanvas2D({
   };
 
   return (
-    <div className="flex-1 flex flex-col bg-slate-50 relative min-h-0 h-full select-none">
+    <div className="flex-1 flex flex-col bg-zinc-100 relative min-h-0 h-full select-none" id="blueprint-main-canvas-wrapper">
       
       {/* 2D CANVAS LAYER SELECTOR BAR */}
-      <div className="bg-slate-900 border-b border-slate-800 px-4 py-2 flex flex-wrap gap-2 items-center justify-between shrink-0 shadow-md">
-        <div className="flex items-center gap-1.5 text-xs text-slate-200 font-bold">
-          <Layers className="w-4 h-4 text-emerald-400" />
-          <span className="uppercase tracking-wider text-[10px] text-emerald-400">Camadas AutoCAD / BIM:</span>
+      <div className="bg-zinc-900 border-b border-zinc-800 px-4 py-2 flex flex-wrap gap-2 items-center justify-between shrink-0 shadow-md">
+        <div className="flex items-center gap-1.5 text-xs text-zinc-300 font-bold">
+          <Layers className="w-4 h-4 text-cyan-400" />
+          <span className="uppercase tracking-widest text-[9px] text-zinc-300 font-mono">CAD Vistas & Camadas:</span>
         </div>
 
-        <div className="flex bg-slate-950 p-1 rounded-lg border border-slate-800 gap-1">
+        <div className="flex bg-zinc-950 p-1 rounded-lg border border-zinc-800 gap-1">
           <button
             id="layer-arch"
             onClick={() => setActiveLayer('architectural')}
-            className={`px-3 py-1 rounded-md text-[11px] font-bold transition-all flex items-center gap-1.5 ${
+            className={`px-3 py-1.5 rounded-md text-[11px] font-bold transition-all flex items-center gap-1.5 ${
               activeLayer === 'architectural'
                 ? 'bg-blue-600 text-white shadow-xs'
-                : 'text-slate-400 hover:text-white hover:bg-slate-900'
+                : 'text-zinc-400 hover:text-white'
             }`}
           >
             <Compass className="w-3.5 h-3.5" />
-            Arquitetônico
+            1. Arquitetônico
           </button>
           <button
             id="layer-elec"
             onClick={() => setActiveLayer('electrical')}
-            className={`px-3 py-1 rounded-md text-[11px] font-bold transition-all flex items-center gap-1.5 ${
+            className={`px-3 py-1.5 rounded-md text-[11px] font-bold transition-all flex items-center gap-1.5 ${
               activeLayer === 'electrical'
                 ? 'bg-amber-600 text-white shadow-xs'
-                : 'text-slate-400 hover:text-white hover:bg-slate-900'
+                : 'text-zinc-400 hover:text-white'
             }`}
           >
             <Zap className="w-3.5 h-3.5" />
-            Elétrico (NBR 5410)
+            2. Elétrico (NBR 5410)
           </button>
           <button
             id="layer-hydr"
             onClick={() => setActiveLayer('hydraulic')}
-            className={`px-3 py-1 rounded-md text-[11px] font-bold transition-all flex items-center gap-1.5 ${
+            className={`px-3 py-1.5 rounded-md text-[11px] font-bold transition-all flex items-center gap-1.5 ${
               activeLayer === 'hydraulic'
                 ? 'bg-sky-600 text-white shadow-xs'
-                : 'text-slate-400 hover:text-white hover:bg-slate-900'
+                : 'text-zinc-400 hover:text-white'
             }`}
           >
             <Droplet className="w-3.5 h-3.5" />
-            Hidrossanitário
+            3. Hidrossanitário
           </button>
           <button
             id="layer-struct"
             onClick={() => setActiveLayer('structural')}
-            className={`px-3 py-1 rounded-md text-[11px] font-bold transition-all flex items-center gap-1.5 ${
+            className={`px-3 py-1.5 rounded-md text-[11px] font-bold transition-all flex items-center gap-1.5 ${
               activeLayer === 'structural'
                 ? 'bg-rose-600 text-white shadow-xs'
-                : 'text-slate-400 hover:text-white hover:bg-slate-900'
+                : 'text-zinc-400 hover:text-white'
             }`}
           >
             <LayoutGrid className="w-3.5 h-3.5" />
-            Estrutural
+            4. Estrutural
           </button>
         </div>
 
-        <div className="text-[10px] bg-slate-950 font-mono py-1 px-2.5 rounded border border-slate-800 text-slate-400 tracking-wider">
-          {activeLayer === 'architectural' && 'MODO PLANTA DE LEIAUTE'}
-          {activeLayer === 'electrical' && 'DISTRIBUIÇÃO DE CONDUÍTES E CARGAS'}
-          {activeLayer === 'hydraulic' && 'RAMAL DE ÁGUA FRIA E ESGOTOS'}
-          {activeLayer === 'structural' && 'CADASTRO DE PILARES E VIGAS'}
+        <div className="text-[9px] bg-zinc-950 font-mono py-1 px-2.5 rounded border border-zinc-800 text-cyan-400 tracking-wider">
+          {activeLayer === 'architectural' && 'PLANTA DE ARQUITETURA'}
+          {activeLayer === 'electrical' && 'FUTURO LANÇAMENTO DE FIAÇÕES'}
+          {activeLayer === 'hydraulic' && 'RAMAIS DE ESGOTO E AF'}
+          {activeLayer === 'structural' && 'CADASTRO DE PILARES/LAJES'}
         </div>
       </div>
 
       {/* 2D CANVAS HEADER */}
-      <div className="bg-white border-b border-slate-100 px-4 py-2 flex justify-between items-center sm:flex-row flex-col gap-2 shrink-0">
-        <div className="flex items-center gap-1.5 text-xs text-slate-500">
-          <Info className="w-4 h-4 text-slate-400" />
+      <div className="bg-white border-b border-zinc-200 px-4 py-2.5 flex justify-between items-center sm:flex-row flex-col gap-2 shrink-0">
+        <div className="flex items-center gap-1.5 text-[11px] text-zinc-500">
+          <Info className="w-4 h-4 text-cyan-600 shrink-0" />
           <span>
             {activeLayer === 'architectural' && (
-              <>Arraste os cômodos para mover. Use o handle <span className="text-amber-600 font-bold">█</span> azul no canto inferior direito para redimensionar cômodos.</>
+              <>Arraste e posicione cômodos. Clique no handle <strong className="text-blue-600">█</strong> azul inferior direito para redimensionar.</>
             )}
             {activeLayer === 'electrical' && (
-              <>Simbologia de Eletricidade Comercial: Conduítes curvados amarelos que ligam tomadas e interruptores ao Quadro Central (QDC).</>
+              <>Lançamento de cargas NBR 5410. Fios elétricos amarelos de conduíte ligam automaticamente as tomadas ao QDC.</>
             )}
             {activeLayer === 'hydraulic' && (
-              <>Rede de Fluidos: Linhas azuis retratam água limpa fria (AF) e linhas marrons grossas o escoamento sanitário (ESG).</>
+              <>Tubulações potáveis em <strong className="text-sky-650 font-bold">azul</strong> e águas negras em <strong className="text-amber-850 font-bold">marrom</strong>.</>
             )}
             {activeLayer === 'structural' && (
-              <>Estrutura em Concreto: Pilares nos cantos ancorando vigas de transição e indicação de armadura de laje.</>
+              <>Pilares estruturais de canto e vigas horizontais para distribuição estável de momentos.</>
             )}
           </span>
         </div>
@@ -316,16 +316,16 @@ export function BlueprintCanvas2D({
             <button
               id="btn-add-door-top"
               onClick={() => onAddDoor(selectedRoom.id, 'bottom')}
-              className="px-2 py-1 text-[11px] font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-md flex items-center gap-1"
+              className="px-2.5 py-1 text-[11px] font-bold bg-zinc-100 hover:bg-zinc-200 text-zinc-800 rounded-md flex items-center gap-1 border border-zinc-250"
             >
-              <Plus className="w-3 h-3" /> Porta
+              <Plus className="w-3 h-3 text-zinc-500" /> + Porta
             </button>
             <button
               id="btn-add-win-top"
               onClick={() => onAddWindow(selectedRoom.id, 'top')}
-              className="px-2 py-1 text-[11px] font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-md flex items-center gap-1"
+              className="px-2.5 py-1 text-[11px] font-bold bg-zinc-100 hover:bg-zinc-200 text-zinc-800 rounded-md flex items-center gap-1 border border-zinc-250"
             >
-              <Plus className="w-3 h-3" /> Janela
+              <Plus className="w-3 h-3 text-zinc-500" /> + Janela
             </button>
             <button
               id="btn-del-room"
@@ -334,9 +334,9 @@ export function BlueprintCanvas2D({
                 onSelectRoom(null);
                 onSelectFurniture(null);
               }}
-              className="px-2 py-1 text-[11px] font-semibold bg-red-100 hover:bg-red-200 text-red-600 rounded-md flex items-center gap-1"
+              className="px-2.5 py-1 text-[11px] font-bold bg-red-50 hover:bg-red-100 text-red-650 rounded-md flex items-center gap-1 border border-red-200"
             >
-              <Trash2 className="w-3 h-3" /> Deletar Sala
+              <Trash2 className="w-3 h-3" /> Excluir Sala
             </button>
           </div>
         )}
@@ -348,11 +348,12 @@ export function BlueprintCanvas2D({
         {/* RENDER GRID WORKSPACE */}
         <div 
           ref={containerRef}
-          className="flex-1 overflow-auto flex items-center justify-center p-4 relative bg-slate-100 border-r border-slate-200"
+          className="flex-1 overflow-auto flex items-center justify-center p-6 relative bg-zinc-200 border-r border-zinc-300"
           onPointerMove={handlePointerMove}
         >
+          {/* Cyanotype blueprint container block */}
           <div 
-            className="relative bg-white shadow-lg border border-slate-200 rounded-xl overflow-hidden"
+            className="relative bg-[#09152b] shadow-2xl border-4 border-zinc-805 rounded-xl overflow-hidden"
             style={{ width: `${gridSize * scale}px`, height: `${gridSize * scale}px` }}
           >
             {/* Blueprint SVG Engine */}
@@ -363,8 +364,8 @@ export function BlueprintCanvas2D({
               {/* Grid Pattern Background */}
               <defs>
                 <pattern id="grid-pattern" width={scale} height={scale} patternUnits="userSpaceOnUse">
-                  <path d={`M ${scale} 0 L 0 0 0 ${scale}`} fill="none" stroke="#e2e8f0" strokeWidth="0.5" />
-                  <path d={`M ${scale / 2} 0 L 0 0 0 ${scale / 2}`} fill="none" stroke="#f1f5f9" strokeWidth="0.25" />
+                  <path d={`M ${scale} 0 L 0 0 0 ${scale}`} fill="none" stroke="#122a57" strokeWidth="0.8" />
+                  <path d={`M ${scale / 2} 0 L 0 0 0 ${scale / 2}`} fill="none" stroke="#0d1f42" strokeWidth="0.4" />
                 </pattern>
                 
                 {/* Diagonal hatch pattern for concrete columns */}
@@ -383,7 +384,8 @@ export function BlueprintCanvas2D({
                 const rh = room.height * scale;
 
                 const isSchematic = activeLayer !== 'architectural';
-                const opacityVal = isSchematic ? '0.04' : '0.3';
+                // Higher opacity ensures the user can easily find, select and see rooms on mobile!
+                const opacityVal = isSchematic ? '0.18' : '0.40';
 
                 return (
                   <g key={room.id} className="cursor-move">
@@ -395,27 +397,28 @@ export function BlueprintCanvas2D({
                       height={rh}
                       fill={room.color}
                       fillOpacity={opacityVal}
-                      stroke={isSelected ? '#2563eb' : isSchematic ? '#94a3b8' : '#64748b'}
-                      strokeWidth={isSelected ? '2' : '1.5'}
+                      stroke={isSelected ? '#06b6d4' : isSchematic ? '#1e3a75' : '#1d4ed8'}
+                      strokeWidth={isSelected ? '2.5' : '1.5'}
                       onPointerDown={(e) => handlePointerDown(e, 'room', room.id, room.x, room.y)}
                       onClick={() => onSelectRoom(room)}
                     />
 
                     {/* Room Area Label Text */}
-                    <g pointerEvents="none" opacity={isSchematic ? 0.35 : 1}>
+                    <g pointerEvents="none" opacity={isSchematic ? 0.6 : 1}>
+                      {/* Using bright white label on dark blue blueprint canvas for high legibility */}
                       <text
                         x={rx + rw / 2}
                         y={ry + rh / 2 - 6}
                         textAnchor="middle"
-                        className="text-[12px] font-bold fill-slate-800 tracking-tight"
+                        className="text-[12px] font-mono font-black fill-white tracking-wide"
                       >
-                        {room.name}
+                        {room.name.toUpperCase()}
                       </text>
                       <text
                         x={rx + rw / 2}
                         y={ry + rh / 2 + 10}
                         textAnchor="middle"
-                        className="text-[10px] font-mono font-semibold fill-slate-500"
+                        className="text-[10px] font-mono font-bold fill-cyan-400"
                       >
                         {(room.width * room.height).toFixed(1)} m²
                       </text>
@@ -428,9 +431,9 @@ export function BlueprintCanvas2D({
                       width={rw}
                       height={rh}
                       fill="none"
-                      stroke={isSchematic ? '#94a3b8' : '#1e293b'}
-                      strokeWidth={isSchematic ? '1.5' : '3'}
-                      strokeDasharray={isSchematic ? '4 4' : '1 1'}
+                      stroke={isSchematic ? '#1e3a75' : '#ffffff'}
+                      strokeWidth={isSchematic ? '1.5' : '3.5'}
+                      strokeDasharray={isSchematic ? '4 4' : 'none'}
                       fillOpacity="0"
                       pointerEvents="none"
                     />
@@ -438,11 +441,11 @@ export function BlueprintCanvas2D({
                     {/* Corner Resize Handle on bottom right */}
                     {isSelected && activeLayer === 'architectural' && (
                       <rect
-                        x={rx + rw - 10}
-                        y={ry + rh - 10}
-                        width="12"
-                        height="12"
-                        className="fill-blue-600 cursor-se-resize stroke-white stroke-2"
+                        x={rx + rw - 12}
+                        y={ry + rh - 12}
+                        width="14"
+                        height="14"
+                        className="fill-cyan-400 cursor-se-resize stroke-slate-900 stroke-2"
                         onPointerDown={(e) =>
                           handlePointerDown(e, 'room-resize', room.id, room.x, room.y, room.width, room.height)
                         }
