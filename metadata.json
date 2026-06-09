@@ -1,0 +1,6 @@
+{
+  "name": "Arquiteto IA",
+  "description": "Crie, edite e visualize plantas baixas em 2D e 3D a partir de fotos utilizando agentes autônomos de arquitetura e a API do Gemini.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
