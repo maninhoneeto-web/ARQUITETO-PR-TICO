@@ -21,6 +21,8 @@ interface BlueprintCanvas2DProps {
   onDeleteFurniture: (furnitureId: string) => void;
   onDeleteDoor: (doorId: string) => void;
   onDeleteWindow: (windowId: string) => void;
+  activeLayer: EngineeringLayer;
+  setActiveLayer: (layer: EngineeringLayer) => void;
 }
 
 export function BlueprintCanvas2D({
@@ -39,9 +41,10 @@ export function BlueprintCanvas2D({
   onDeleteFurniture,
   onDeleteDoor,
   onDeleteWindow,
+  activeLayer,
+  setActiveLayer,
 }: BlueprintCanvas2DProps) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const [activeLayer, setActiveLayer] = useState<EngineeringLayer>('architectural');
   
   // Dragging states
   const [dragState, setDragState] = useState<{
@@ -815,10 +818,21 @@ export function BlueprintCanvas2D({
                 const fh = furniture.height * scale;
                 const isSelected = selectedFurniture?.id === furniture.id;
 
-                const isSchematic = activeLayer !== 'architectural';
-                if (isSchematic) {
+                const isElectrical = ['socket', 'switch', 'light', 'qdc'].includes(furniture.type);
+                const isHydraulic = ['sink', 'toilet', 'shower', 'caixa_insp'].includes(furniture.type);
+                const isStructural = ['pilar', 'viga'].includes(furniture.type);
+                const isArchitectural = !isElectrical && !isHydraulic && !isStructural;
+
+                const isPrimaryForLayer = 
+                  (activeLayer === 'architectural' && isArchitectural) ||
+                  (activeLayer === 'electrical' && isElectrical) ||
+                  (activeLayer === 'hydraulic' && isHydraulic) ||
+                  (activeLayer === 'structural' && isStructural);
+
+                if (!isPrimaryForLayer) {
+                  // Render a clean background overlay guide that is passive so the user has references
                   return (
-                    <g key={`furniture-outline-${furniture.id}`} transform={`translate(${fx}, ${fy})`} pointerEvents="none" opacity="0.3">
+                    <g key={`passive-${furniture.id}`} transform={`translate(${fx}, ${fy})`} pointerEvents="none" opacity="0.12">
                       <g transform={`rotate(${furniture.rotation}, ${fw / 2}, ${fh / 2})`}>
                         <rect
                           x="0"
@@ -827,9 +841,9 @@ export function BlueprintCanvas2D({
                           height={fh}
                           rx="2"
                           fill="none"
-                          stroke="#64748b"
-                          strokeWidth="0.75"
-                          strokeDasharray="2 2"
+                          stroke={isElectrical ? '#b45309' : isHydraulic ? '#2563eb' : isStructural ? '#e11d48' : '#475569'}
+                          strokeWidth="0.8"
+                          strokeDasharray="3 3"
                         />
                       </g>
                     </g>
@@ -840,31 +854,61 @@ export function BlueprintCanvas2D({
                   <g 
                     key={furniture.id} 
                     transform={`translate(${fx}, ${fy})`}
-                    className="cursor-grab"
+                    className="cursor-grab active:cursor-grabbing"
                   >
                     <g 
                       transform={`rotate(${furniture.rotation}, ${fw / 2}, ${fh / 2})`}
                       onPointerDown={(e) => handlePointerDown(e, 'furniture', furniture.id, furniture.x, furniture.y)}
                     >
-                      <rect
-                        x="0"
-                        y="0"
-                        width={fw}
-                        height={fh}
-                        rx="4"
-                        fill={
-                          furniture.type === 'couch' ? '#fed7aa' :
-                          furniture.type === 'bed' ? '#fbcfe8' :
-                          furniture.type === 'table' ? '#e5e7eb' :
-                          furniture.type === 'fridge' || furniture.type === 'stove' ? '#cbd5e1' :
-                          furniture.type === 'sink' || furniture.type === 'toilet' || furniture.type === 'shower' ? '#99f6e4' :
-                          '#d9f99d'
-                        }
-                        stroke={isSelected ? '#f59e0b' : '#334155'}
-                        strokeWidth={isSelected ? '2.5' : '1.2'}
-                        strokeDasharray={furniture.type === 'plant' ? '3 2' : 'none'}
-                      />
+                      {/* Architectural elements are styled originally, whereas special BIM nodes get styled realistically */}
+                      {isArchitectural ? (
+                        <rect
+                          x="0"
+                          y="0"
+                          width={fw}
+                          height={fh}
+                          rx="4"
+                          fill={
+                            furniture.type === 'couch' ? '#fed7aa' :
+                            furniture.type === 'bed' ? '#fbcfe8' :
+                            furniture.type === 'table' ? '#e5e7eb' :
+                            furniture.type === 'fridge' || furniture.type === 'stove' ? '#cbd5e1' :
+                            '#d9f99d'
+                          }
+                          stroke={isSelected ? '#2563eb' : '#334155'}
+                          strokeWidth={isSelected ? '2.5' : '1.2'}
+                        />
+                      ) : (
+                        /* Special installation nodes (BIM) style according to standards */
+                        <rect
+                          x="0"
+                          y="0"
+                          width={fw}
+                          height={fh}
+                          rx="2"
+                          fill={
+                            furniture.type === 'light' ? '#fef08a' :
+                            furniture.type === 'qdc' ? '#1e293b' :
+                            furniture.type === 'pilar' ? 'url(#hatch-pattern)' :
+                            furniture.type === 'viga' ? '#ffe4e6' :
+                            furniture.type === 'caixa_insp' ? '#fed7aa' :
+                            furniture.type === 'shower' ? '#ccfbf1' :
+                            furniture.type === 'toilet' ? '#f3e8ff' :
+                            furniture.type === 'sink' ? '#e0f2fe' :
+                            '#fef08a'
+                          }
+                          stroke={
+                            isSelected ? '#3b82f6' :
+                            isElectrical ? '#ca8a04' :
+                            isHydraulic ? '#0284c7' :
+                            isStructural ? '#b91c1c' :
+                            '#2563eb'
+                          }
+                          strokeWidth={isSelected ? '2.5' : '1.5'}
+                        />
+                      )}
 
+                      {/* Custom inner schematic designs for real architectural/engineering feel */}
                       {furniture.type === 'couch' && (
                         <g opacity="0.4" pointerEvents="none">
                           <rect x="3" y="3" width={fw - 6} height={fh - 10} fill="none" stroke="#6b21a8" strokeWidth="0.5" />
@@ -879,15 +923,62 @@ export function BlueprintCanvas2D({
                         </g>
                       )}
 
+                      {/* Special NBR 5410 vectors */}
+                      {furniture.type === 'light' && (
+                        <g opacity="0.85" pointerEvents="none">
+                          <line x1={fw/2 - 12} y1={fh/2} x2={fw/2 + 12} y2={fh/2} stroke="#ca8a04" strokeWidth="1" />
+                          <line x1={fw/2} y1={fh/2 - 12} x2={fw/2} y2={fh/2 + 12} stroke="#ca8a04" strokeWidth="1" />
+                        </g>
+                      )}
+                      {furniture.type === 'socket' && (
+                        <g opacity="0.9" pointerEvents="none" transform={`translate(${fw/2}, ${fh/2}) scale(0.9)`}>
+                          <polygon points="0,-7 -7,5 7,5" fill="#fef08a" stroke="#ca8a04" strokeWidth="1.2" />
+                          <line x1="0" y1="5" x2="0" y2="9" stroke="#ca8a04" strokeWidth="1.2" />
+                        </g>
+                      )}
+                      {furniture.type === 'switch' && (
+                        <g opacity="0.9" pointerEvents="none" transform={`translate(${fw/2}, ${fh/2}) scale(0.9)`}>
+                          <circle cx="0" cy="0" r="5" fill="#ecfdf5" stroke="#059669" strokeWidth="1.2" />
+                          <text x="-2" y="2.5" className="text-[6.5px] font-black fill-emerald-800">S</text>
+                        </g>
+                      )}
+                      {furniture.type === 'qdc' && (
+                        <g opacity="0.95" pointerEvents="none">
+                          <polygon points={`0,0 ${fw},0 0,${fh}`} fill="#0f172a" />
+                        </g>
+                      )}
+
+                      {/* Special structural concrete hatching visuals */}
+                      {furniture.type === 'pilar' && (
+                        <g pointerEvents="none">
+                          <text x={fw / 2} y={fh / 2 + 2} textAnchor="middle" className="text-[7.5px] font-black fill-white bg-black">P</text>
+                        </g>
+                      )}
+                      {furniture.type === 'viga' && (
+                        <g opacity="0.3" pointerEvents="none">
+                          <line x1="0" y1="0" x2={fw} y2={fh} stroke="#b91c1c" strokeWidth="1" />
+                          <line x1={fw} y1="0" x2="0" y2={fh} stroke="#b91c1c" strokeWidth="1" />
+                        </g>
+                      )}
+
+                      {/* Text node designation */}
                       <text
                         x={fw / 2}
                         y={fh / 2 + 3}
                         textAnchor="middle"
-                        className="text-[9px] font-semibold fill-slate-800"
+                        className={`text-[8.5px] pointer-events-none font-semibold ${
+                          furniture.type === 'qdc' ? 'fill-slate-100' : 'fill-slate-800'
+                        }`}
                         pointerEvents="none"
                         transform={`rotate(${-furniture.rotation}, ${fw / 2}, ${fh / 2})`}
                       >
-                        {furniture.name}
+                        {furniture.type === 'light' ? '💡 Luz' :
+                         furniture.type === 'socket' ? '🔌 TUG' :
+                         furniture.type === 'switch' ? '🎛️ S' :
+                         furniture.type === 'qdc' ? 'QDC' :
+                         furniture.type === 'pilar' ? 'Pilar' :
+                         furniture.type === 'viga' ? 'Viga' :
+                         furniture.name}
                       </text>
                     </g>
 

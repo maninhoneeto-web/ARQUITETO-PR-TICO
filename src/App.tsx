@@ -6,10 +6,11 @@
 import React, { useState } from 'react';
 import { 
   Building, Compass, Layers, Sparkles, FileText, Smartphone, Laptop, 
-  RefreshCw, CheckCircle2, RotateCcw, AlertTriangle, HelpCircle
+  RefreshCw, CheckCircle2, RotateCcw, AlertTriangle, HelpCircle,
+  Zap, Droplet, LayoutGrid, Sofa, Hammer
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import { FloorPlanData, Room, Furniture, FloorMaterial, FurnitureType, Door, Window } from './types';
+import { FloorPlanData, Room, Furniture, FloorMaterial, FurnitureType, Door, Window, EngineeringLayer } from './types';
 import { mockStudioApartment, mockRuralHouse } from './utils/mockBlueprints';
 import { SidebarPalette } from './components/SidebarPalette';
 import { BlueprintCanvas2D } from './components/BlueprintCanvas2D';
@@ -30,6 +31,12 @@ export default function App() {
   const [sidebarTab, setSidebarTab] = useState<'build' | 'items' | 'materials'>('build');
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [showHelpModal, setShowHelpModal] = useState<boolean>(false);
+  
+  // BIP Active engineering layer syncing globally (fixes disjointed electrical tab view)
+  const [activeLayer, setActiveLayer] = useState<EngineeringLayer>('architectural');
+  
+  // View mode for mobile to allow roomy displays without overcrowding ('canvas' | 'palette' | 'agents')
+  const [activeMobileSection, setActiveMobileSection] = useState<'canvas' | 'palette' | 'agents'>('canvas');
   
   // Notification banner
   const [apiNotification, setApiNotification] = useState<{
@@ -153,7 +160,7 @@ export default function App() {
   const handleAddFurniture = (type: FurnitureType) => {
     if (!selectedRoom) return;
 
-    // determine default size of typical item
+    // determine default size of typical item (length/width in meters)
     let w = 1.0, h = 0.8, name = 'Móvel';
     switch (type) {
       case 'couch': w = 1.8; h = 0.9; name = 'Sofá Clássico'; break;
@@ -168,6 +175,19 @@ export default function App() {
       case 'toilet': w = 0.5; h = 0.7; name = 'Vaso Sanitário'; break;
       case 'sink': w = 0.6; h = 0.5; name = 'Lavatório'; break;
       case 'shower': w = 0.9; h = 0.9; name = 'Box Chuveiro'; break;
+      
+      // Electrical fittings (NBR 5410)
+      case 'socket': w = 0.25; h = 0.25; name = 'Tomada Geral TUG'; break;
+      case 'switch': w = 0.2; h = 0.2; name = 'Interruptor'; break;
+      case 'light': w = 0.4; h = 0.4; name = 'Ponto de Luz Teto'; break;
+      case 'qdc': w = 0.6; h = 0.2; name = 'Quadro QDC'; break;
+      
+      // Plumbing and infrastructure
+      case 'caixa_insp': w = 0.5; h = 0.5; name = 'Caixa Inspeção'; break;
+      
+      // Structural concrete members
+      case 'pilar': w = 0.3; h = 0.3; name = 'Pilar Estrutural'; break;
+      case 'viga': w = 1.6; h = 0.25; name = 'Viga Reforço'; break;
     }
 
     const newFurn: Furniture = {
@@ -529,21 +549,25 @@ export default function App() {
       </AnimatePresence>
 
       {/* CORE FRAME CONTAINER: THREE-COLUMN Bento Design */}
-      <main className="flex-1 flex flex-col lg:flex-row min-h-0 bg-slate-900">
+      <main className="flex-1 flex flex-col lg:flex-row min-h-0 bg-slate-900 overflow-hidden">
         
         {/* COLUMN 1: Sidebar palette (Only in 2D layout edit Mode for cleanliness) */}
         {viewMode === '2D' ? (
-          <SidebarPalette
-            onAddRoom={handleAddRoom}
-            onAddFurniture={handleAddFurniture}
-            selectedRoom={selectedRoom}
-            onUpdateRoomFloor={handleUpdateRoomFloor}
-            activeTab={sidebarTab}
-            setActiveTab={setSidebarTab}
-          />
+          <div className={`${activeMobileSection === 'palette' ? 'flex flex-col flex-1 min-h-0' : 'hidden lg:flex lg:flex-col shrink-0'}`}>
+            <SidebarPalette
+              onAddRoom={handleAddRoom}
+              onAddFurniture={handleAddFurniture}
+              selectedRoom={selectedRoom}
+              onUpdateRoomFloor={handleUpdateRoomFloor}
+              activeTab={sidebarTab}
+              setActiveTab={setSidebarTab}
+              activeLayer={activeLayer}
+              setActiveLayer={setActiveLayer}
+            />
+          </div>
         ) : (
           /* Small elegant 3D hints panel in place of drawer */
-          <div className="w-full lg:w-44 bg-slate-950 border-r border-slate-800 p-4 space-y-4 flex flex-col text-xs leading-relaxed tracking-tight shrink-0">
+          <div className={`w-full lg:w-44 bg-slate-950 border-r border-slate-800 p-4 space-y-4 flex flex-col text-xs leading-relaxed tracking-tight shrink-0 ${activeMobileSection === 'palette' ? 'flex flex-col flex-1' : 'hidden lg:flex'}`}>
             <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Guia do Renderizador</span>
             <div className="space-y-3">
               <div className="p-3 bg-slate-900 border border-slate-800 rounded-lg">
@@ -559,7 +583,7 @@ export default function App() {
         )}
 
         {/* COLUMN 2: Primary Blueprint viewer (fills workspace) */}
-        <div className="flex-1 flex flex-col min-h-0">
+        <div className={`flex-1 flex-col min-h-0 ${activeMobileSection === 'canvas' ? 'flex flex-1' : 'hidden lg:flex'}`}>
           <div className="flex-1 flex min-h-0 relative">
             <AnimatePresence mode="wait">
               {viewMode === '2D' ? (
@@ -586,6 +610,8 @@ export default function App() {
                     onDeleteFurniture={handleDeleteFurniture}
                     onDeleteDoor={handleDeleteDoor}
                     onDeleteWindow={handleDeleteWindow}
+                    activeLayer={activeLayer}
+                    setActiveLayer={setActiveLayer}
                   />
                 </motion.div>
               ) : (
@@ -603,21 +629,57 @@ export default function App() {
           </div>
 
           {/* LOWER SECTION: Costs and dynamic quantitative analysis */}
-          <div className="p-4 bg-slate-950 border-t border-slate-800 overflow-y-auto max-h-56">
+          <div className="p-4 bg-slate-950 border-t border-slate-800 overflow-y-auto max-h-52 shrink-0">
             <CostReport floorPlan={floorPlan} />
           </div>
         </div>
 
         {/* COLUMN 3: Conversational Autonomous Multi-Agent panel */}
-        <AgentPanel
-          agentDebates={floorPlan.agentDebates}
-          onUploadBlueprint={handleUploadBlueprint}
-          onSendMessage={handleSendMessage}
-          isLoading={isLoading}
-          onSelectPreset={handleSelectPreset}
-        />
+        <div className={`${activeMobileSection === 'agents' ? 'flex flex-col flex-1 min-h-0' : 'hidden lg:flex lg:flex-col shrink-0'}`}>
+          <AgentPanel
+            agentDebates={floorPlan.agentDebates}
+            onUploadBlueprint={handleUploadBlueprint}
+            onSendMessage={handleSendMessage}
+            isLoading={isLoading}
+            onSelectPreset={handleSelectPreset}
+          />
+        </div>
 
       </main>
+
+      {/* MOBILE BOTTOM NAVIGATION BAR - ONLY VISIBLE ON SMALLER SCREENS */}
+      <div className="lg:hidden shrink-0 bg-slate-950 border-t border-slate-800/80 px-4 py-2 flex justify-around items-center text-slate-400 z-40">
+        <button
+          id="m-nav-palette"
+          onClick={() => setActiveMobileSection('palette')}
+          className={`flex flex-col items-center gap-1 py-1 text-[10px] font-bold transition-all ${
+            activeMobileSection === 'palette' ? 'text-blue-500 font-extrabold' : 'text-slate-500'
+          }`}
+        >
+          <Sofa className="w-5 h-5" />
+          <span>Ferramentas</span>
+        </button>
+        <button
+          id="m-nav-canvas"
+          onClick={() => setActiveMobileSection('canvas')}
+          className={`flex flex-col items-center gap-1 py-1 text-[10px] font-bold transition-all ${
+            activeMobileSection === 'canvas' ? 'text-emerald-500 font-extrabold' : 'text-slate-500'
+          }`}
+        >
+          <Compass className="w-5 h-5" />
+          <span>Planta 2D/3D</span>
+        </button>
+        <button
+          id="m-nav-agents"
+          onClick={() => setActiveMobileSection('agents')}
+          className={`flex flex-col items-center gap-1 py-1 text-[10px] font-bold transition-all ${
+            activeMobileSection === 'agents' ? 'text-pink-500 font-extrabold' : 'text-slate-500'
+          }`}
+        >
+          <Sparkles className="w-5 h-5" />
+          <span>Arquiteto IA</span>
+        </button>
+      </div>
 
       {/* HELP INSTRUCTIONS DIALOGUE MODAL */}
       <AnimatePresence>

@@ -41,7 +41,14 @@ export type FurnitureType =
   | 'shower'
   | 'fridge'
   | 'stove'
-  | 'cabinet';
+  | 'cabinet'
+  | 'socket'
+  | 'switch'
+  | 'light'
+  | 'qdc'
+  | 'pilar'
+  | 'viga'
+  | 'caixa_insp';
 
 export interface Furniture {
   id: string;
